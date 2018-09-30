@@ -7,6 +7,17 @@
 
 using namespace std;
 
+// Convert vector of ints to string
+string vec2string(vector<int> &vec){
+    
+    string output;
+    // Convert the vector to a string
+    for(int i = 0; i < vec.size(); i++)
+        output.append(to_string(vec[i]));
+    
+    return output;
+}
+
 // Add x to y, x + y
 vector<int> add_numbers(vector<int> &x, vector<int> &y){
 
@@ -42,8 +53,8 @@ vector<int> add_numbers(vector<int> &x, vector<int> &y){
     // Take care of the last element 
     out[i] += carry;
 
-    // If carry is not set, pop the extra zero from out
-    if(!carry)
+    // Recursivley pop the extra zeros from out
+    while(!out.back())
         out.pop_back();
 
     // Reverse the out vector and input vectors
@@ -91,6 +102,10 @@ vector<int> subtract_numbers(vector<int> &x, vector<int> &y){
         else
             borrow = 0;
     }
+
+    // Recursivley pop the extra zeros from out
+    while(!out.back())
+        out.pop_back();
 
     // Reverse the out vector and input vectors
     std::reverse(out.begin(), out.end());
@@ -161,23 +176,59 @@ vector<int> multiply_numbers(vector<int> &x, vector<int> &y){
 // Multiply x and y, x*y using karatsubas multiplication
 vector<int> karatsubas_multiplication(vector<int> &x, vector<int> &y){
 
-    if((x.size() == 1) || (y.size() == 1))
-        vector<int> out ((x.size() >= y.size()? x.size(): y.size()) + 1, 0);
-
+    if((x.size() + y.size()) < 5){
+        cout << "In multiply numbers" << endl;
+        return multiply_numbers(x, y);
+    }
+    else{
         // Split input numbers into 2 roughly equal halves
         int split_a = x.size()/2; // x = a*N + b, N = 10^split_b
-        int split_b = x.size() - split_a;
-
         int split_c = y.size()/2; // y = c*N + d, N = 10^split_d
-        int split_d= y.size() - split_c;
 
+        // Construct the sub vectors
+        vector<int> a_x (x.begin(), x.begin() + split_a); // a part of vector x
+        vector<int> b_x (x.begin() + split_a, x.end()); // b part of vector x
+
+        vector<int> c_y (y.begin(), y.begin() + split_c); // a part of vector x
+        vector<int> d_y (y.begin() + split_c, y.end()); // b part of vector x
+
+        cout << "a_x " << vec2string(a_x) << endl;
+        cout << "b_x " << vec2string(b_x) << endl;
+        cout << "c_y " << vec2string(c_y) << endl;
+        cout << "d_y " << vec2string(d_y) << endl;
+
+        // Construct the intermediate variables for mulitplication
+        vector<int> z2 = karatsubas_multiplication(a_x, c_y);
+        vector<int> z0 = karatsubas_multiplication(b_x, d_y);
+        
+        vector<int> a_plus_c = add_numbers(a_x, c_y);
+        vector<int> b_plus_d = add_numbers(b_x, d_y);
+        vector<int> a_plus_c_times_b_plus_d = karatsubas_multiplication(a_plus_c, b_plus_d);
+        vector<int> sub_z2 = subtract_numbers(a_plus_c_times_b_plus_d, z2);
+        vector<int> z1 = subtract_numbers(sub_z2, z0);
+
+        // Construct the power factor
+        vector<int> N (split_a, 0);
+        N[0] = 1; // Power factor
+        vector<int> N_squared = karatsubas_multiplication(N, N);
+        
+        // Combine the answers
+        vector<int> z2_times_N_squared = karatsubas_multiplication(z2, N_squared);
+        vector<int> z1_times_N = karatsubas_multiplication(z1, N);
+        vector<int> intermediate_sum = add_numbers(z2_times_N_squared, z1_times_N);
+        
+        return add_numbers(intermediate_sum, z0);
+    }
 }
 
 int main(){
 
     // Inputs to the program
-    string x = "3141592653589793238462643383279502884197169399375105820974944592";
-    string y = "2718281828459045235360287471352662497757247093699959574966967627";
+    // string x = "3141592653589793238462643383279502884197169399375105820974944592";
+    // string y = "2718281828459045235360287471352662497757247093699959574966967627";
+
+    string x = "1234";
+    string y = "6789";
 
     int len_x = x.size();
     int len_y = y.size();
@@ -208,11 +259,16 @@ int main(){
     //     cout << sub_xy[i] << endl;
 
     // Test mulitply num
-    vector<int> mul_x (3,9);
-    vector<int> mul_y (4,9);
-    vector<int> mul_xy = multiply_numbers(mul_x, mul_y);
-    for(int i = 0; i < mul_xy.size(); i++)
-        cout << mul_xy[i] << endl;
+    // vector<int> mul_x (4,2);
+    // vector<int> mul_y (3,3);
+    // vector<int> mul_xy = multiply_numbers(vec_x, vec_y);
      
+    // Test karatsubas multiplication
+    vector<int> karat_xy = karatsubas_multiplication(vec_x, vec_y);
+
+    string output = vec2string(karat_xy);
+
+    // cout << "The output is " << output << endl;
+
     return 1;
 }
